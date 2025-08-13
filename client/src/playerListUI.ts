@@ -1,4 +1,4 @@
-import { Container, Graphics, Text } from 'pixi.js';
+import { Container, Graphics } from 'pixi.js';
 import type { SnapshotMessage } from '@game/shared';
 import { PLAYER_COLORS } from '@game/shared';
 
@@ -7,7 +7,7 @@ export function createPlayerListUI(): { node: Container; update(snap: SnapshotMe
   node.x = 10; // Right side margin
   node.y = 10; // Top margin
   
-  const playerEntries = new Map<string, { container: Container; healthBar: Graphics; nameText: Text; hpText: Text }>();
+  const playerEntries = new Map<string, { container: Container; healthBar: Graphics; colorIndicator: Graphics }>();
 
   function update(snap: SnapshotMessage) {
     // Clean up old entries
@@ -28,56 +28,40 @@ export function createPlayerListUI(): { node: Container; update(snap: SnapshotMe
         const container = new Container();
         const playerColor = PLAYER_COLORS[player.colorIndex] || PLAYER_COLORS[0];
         
-        // Player color indicator (small square)
+        // Player color indicator (square aligned with health bar)
         const colorIndicator = new Graphics();
         colorIndicator.rect(0, 0, 16, 16).fill(playerColor);
         container.addChild(colorIndicator);
         
-        // Player name text
-        const nameText = new Text({
-          text: `Player ${player.id.slice(-4)}`,
-          style: {
-            fontSize: 12,
-            fill: 0xffffff,
-            fontFamily: 'Arial',
-          }
-        });
-        nameText.x = 20;
-        nameText.y = 0;
-        container.addChild(nameText);
+        // Health bar white border
+        const healthBorder = new Graphics();
+        healthBorder.rect(24, 0, 82, 16).stroke({ color: 0xffffff, width: 1 });
+        container.addChild(healthBorder);
         
-        // Health bar background
+        // Health bar gray background
         const healthBg = new Graphics();
-        healthBg.rect(20, 18, 80, 8).fill(0x333333);
+        healthBg.rect(25, 1, 80, 14).fill(0x666666);
         container.addChild(healthBg);
         
         // Health bar foreground
         const healthBar = new Graphics();
         container.addChild(healthBar);
         
-        // HP text
-        const hpText = new Text({
-          text: '100/100',
-          style: {
-            fontSize: 10,
-            fill: 0xffffff,
-            fontFamily: 'Arial',
-          }
-        });
-        hpText.x = 105;
-        hpText.y = 16;
-        container.addChild(hpText);
-        
         // Position the entry
-        container.y = index * 35;
+        container.y = index * 22; // Reduced spacing since no text
         node.addChild(container);
         
-        entry = { container, healthBar, nameText, hpText };
+        entry = { container, healthBar, colorIndicator };
         playerEntries.set(player.id, entry);
       }
       
       // Update entry position (in case order changed)
-      entry.container.y = index * 35;
+      entry.container.y = index * 22;
+      
+      // Update player color (in case colorIndex changed)
+      const playerColor = PLAYER_COLORS[player.colorIndex] || PLAYER_COLORS[0];
+      entry.colorIndicator.clear();
+      entry.colorIndicator.rect(0, 0, 16, 16).fill(playerColor);
       
       // Update health bar
       const healthPercent = Math.max(0, player.hp) / 100;
@@ -88,20 +72,11 @@ export function createPlayerListUI(): { node: Container; update(snap: SnapshotMe
       if (healthPercent < 0.5) healthColor = 0xf39c12; // Orange
       if (healthPercent < 0.25) healthColor = 0xe74c3c; // Red
       
-      entry.healthBar.rect(20, 18, 80 * healthPercent, 8).fill(healthColor);
+      entry.healthBar.rect(25, 1, 80 * healthPercent, 14).fill(healthColor);
       
-      // Update HP text
-      entry.hpText.text = `${Math.max(0, player.hp)}/100`;
-      
-      // Update name with frags if any
-      const fragText = player.frags > 0 ? ` (${player.frags})` : '';
-      entry.nameText.text = `Player ${player.id.slice(-4)}${fragText}`;
-      
-      // Highlight if spawn protected
+      // Add spawn protection indicator (golden border around color indicator)
       if (player.spawnProtected) {
-        entry.nameText.style.fill = 0xf1c40f; // Yellow when protected
-      } else {
-        entry.nameText.style.fill = 0xffffff; // White normally
+        entry.colorIndicator.rect(-1, -1, 18, 18).stroke({ color: 0xf1c40f, width: 2 });
       }
     });
   }

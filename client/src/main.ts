@@ -68,7 +68,7 @@ async function start() {
       app.stage.addChild(playerListUI.node);
       
       // Position UI at top-right corner
-      playerListUI.node.x = width - 200; // 200px from right edge
+      playerListUI.node.x = width - 120; // 120px from right edge (smaller width needed)
       playerListUI.node.y = 10; // 10px from top
     } else if (msg.type === 'snapshot') {
       playersLayer?.render(msg as any);
