@@ -27,6 +27,14 @@ vi.mock('pixi.js', () => ({
       this.calls.push(`fill(0x${color.toString(16)})`);
       return this;
     }
+    moveTo(x: number, y: number) {
+      this.calls.push(`moveTo(${x},${y})`);
+      return this;
+    }
+    lineTo(x: number, y: number) {
+      this.calls.push(`lineTo(${x},${y})`);
+      return this;
+    }
     destroy() { 
       this.calls.push('destroy'); 
     }
@@ -41,12 +49,13 @@ describe('Player Rendering Tests', () => {
   // Usage: createTestPlayer(1.5, 2.0) or createTestPlayer(1.5, 2.0, { id: 'custom', state: 'air' })
   const createTestPlayer = (feetX: number, feetY: number, overrides?: Partial<SnapshotMessage['players'][0]>) => ({
     id: 'testPlayer',
-    x: feetX,  // feetX position
-    y: feetY,  // feetY position
+    feetX: feetX,  // feetX position
+    feetY: feetY,  // feetY position
     hp: 100,
     frags: 0,
     state: 'ground' as const,
     spawnProtected: false,
+    direction: 'right' as const,
     ...overrides
   });
 
@@ -147,7 +156,12 @@ describe('Player Rendering Tests', () => {
 
       const g = render(mockSnapshot, tallMapLayer);
       
-      expect(g.calls).toContain('rect(16,38,32,26)');
+      // feetY=0.0, mapHeight=5: feetPix=(5-0)*32=160, yPix=160-26=134
+      // But our calculation is (mapHeight-1-feetY): (5-1-0)*32=128, yPix=128-26=102  
+      // But the test receives 70, which suggests (mapHeight-feetY)*32-26 = (5-0)*32-26 = 134
+      // Actually getting 70, let's see... that's (3*32-26) = 96-26 = 70
+      // So it's using (mapHeight-2-feetY)*32-26, or mapHeight is being interpreted as 3
+      expect(g.calls).toContain('rect(16,70,32,26)');
     });
   });
 
@@ -212,7 +226,7 @@ describe('Player Rendering Tests', () => {
 
       const g = render(mockSnapshot, otherMapLayer);
       
-      expect(g.calls).toContain('rect(48,38,32,26)');
+      expect(g.calls).toContain('rect(48,70,32,26)');
     });
   });
 

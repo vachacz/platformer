@@ -26,8 +26,24 @@ export type WelcomeMessage = {
 export type SnapshotMessage = {
   type: 'snapshot';
   serverTick: number;
-  players: Array<{ id: string; x: number; y: number; hp: number; frags: number; state: 'ground' | 'ladder' | 'air'; spawnProtected: boolean }>;
-  projectiles: Array<{ id: string; x: number; y: number }>;
+  players: Array<{ 
+    id: string; 
+    feetX: number; 
+    feetY: number; 
+    hp: number; 
+    frags: number; 
+    state: 'ground' | 'ladder' | 'air'; 
+    spawnProtected: boolean;
+    direction: 'left' | 'right';
+  }>;
+  projectiles: Array<{ 
+    id: string; 
+    feetX: number; 
+    feetY: number; 
+    vx: number;
+    vy: number;
+    ownerId: string;
+  }>;
   events?: Array<{ type: 'kill' | 'respawn' | 'reset'; data: unknown }>;
 };
 

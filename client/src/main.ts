@@ -4,6 +4,7 @@ import type { WelcomeMessage } from '@game/shared';
 import { renderMap } from './mapView.js';
 import { createKeyboard } from './input.js';
 import { createPlayersLayer } from './playerView.js';
+import { createProjectilesLayer } from './projectileView.js';
 
 const app = new Application();
 const root = document.getElementById('app')!;
@@ -14,6 +15,7 @@ async function start() {
   const kb = createKeyboard();
   kb.attach();
   let playersLayer: ReturnType<typeof createPlayersLayer> | null = null;
+  let projectilesLayer: ReturnType<typeof createProjectilesLayer> | null = null;
 
   // Minimal connection to server
   const ws = new WebSocket('ws://localhost:8080');
@@ -54,8 +56,13 @@ async function start() {
       // Create players layer with map height for coordinate mapping
       playersLayer = createPlayersLayer(w.map.height);
       app.stage.addChild(playersLayer.node);
+
+      // Create projectiles layer
+      projectilesLayer = createProjectilesLayer(w.map.height);
+      app.stage.addChild(projectilesLayer.node);
     } else if (msg.type === 'snapshot') {
       playersLayer?.render(msg as any);
+      projectilesLayer?.render(msg as any);
     }
   });
 

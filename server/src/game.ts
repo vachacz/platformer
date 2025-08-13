@@ -30,6 +30,17 @@ export type Player = {
   spawnProtectedUntil: number;
   canFireAt: number;
   fallingFromY: number | null;
+  direction: 'left' | 'right';
+};
+
+export type Projectile = {
+  id: string;
+  feetX: number;
+  feetY: number;
+  vx: number;
+  vy: number;
+  ownerId: string;
+  createdAt: number;
 };
 
 export type PlayerInput = {
@@ -42,6 +53,7 @@ export type PlayerInput = {
 
 export class Game {
   private players = new Map<string, Player>();
+  private projectiles = new Map<string, Projectile>();
   private inputs = new Map<string, PlayerInput>();
   private lastTickAt = 0;
 
@@ -119,12 +131,14 @@ export class Game {
     p.vx = 0;
     
     if (input.moveLeft) {
+      p.direction = 'left'; // Update direction
       if (this.canMoveLeft(p)) {
         p.vx = -MOVE_SPEED;
       } else {
         this.plogf(p, "BLOCK LEFT", "Cannot move LEFT");
       }
     } else if (input.moveRight) {
+      p.direction = 'right'; // Update direction
       if (this.canMoveRight(p)) {
         p.vx = MOVE_SPEED;
       } else {
@@ -269,6 +283,98 @@ export class Game {
     } else if (hasState(p, 'ground') || hasState(p, 'ladder')) {
       p.fallingFromY = null;
     }
+
+    // Step 8: Handle shooting
+    if (input.fire && Date.now() >= p.canFireAt) {
+      this.createProjectile(p);
+      p.canFireAt = Date.now() + (1000 / CONSTANTS.fireRatePerSec);
+    }
+  }
+
+  private createProjectile(player: Player): void {
+    const id = nanoid();
+    const direction = player.direction === 'left' ? -1 : 1;
+    
+    const projectile: Projectile = {
+      id,
+      feetX: player.feetX + (direction * 0.6), // Spawn slightly ahead of player
+      feetY: player.feetY - 0.3, // Spawn at chest level
+      vx: direction * CONSTANTS.speeds.projectile,
+      vy: 0,
+      ownerId: player.id,
+      createdAt: Date.now(),
+    };
+
+    this.projectiles.set(id, projectile);
+    this.plogf(player, "FIRE", `Shot projectile ${direction > 0 ? 'right' : 'left'}`);
+  }
+
+  private updateProjectiles(dt: number): void {
+    const toRemove: string[] = [];
+
+    for (const [id, projectile] of this.projectiles) {
+      // Update position
+      projectile.feetX += projectile.vx * dt;
+      projectile.feetY += projectile.vy * dt;
+
+      // Check map boundaries
+      if (projectile.feetX < 0 || projectile.feetX > this.map.width || 
+          projectile.feetY < 0 || projectile.feetY > this.map.height) {
+        toRemove.push(id);
+        continue;
+      }
+
+      // Check wall collision
+      const tile = this.tileAt(Math.floor(projectile.feetX), Math.floor(projectile.feetY));
+      if (tile === TILE.FLOOR) {
+        toRemove.push(id);
+        continue;
+      }
+
+      // Check player collisions (exclude owner)
+      for (const [playerId, player] of this.players) {
+        if (playerId === projectile.ownerId) continue;
+
+        const dx = Math.abs(player.feetX - projectile.feetX);
+        const dy = Math.abs((player.feetY - 0.5) - projectile.feetY); // Player center vs projectile
+        
+        if (dx < 0.4 && dy < 0.4) { // Hit detection
+          this.hitPlayer(player, projectile);
+          toRemove.push(id);
+          break;
+        }
+      }
+
+      // Remove old projectiles (5 second lifetime)
+      if (Date.now() - projectile.createdAt > 5000) {
+        toRemove.push(id);
+      }
+    }
+
+    // Remove marked projectiles
+    for (const id of toRemove) {
+      this.projectiles.delete(id);
+    }
+  }
+
+  private hitPlayer(player: Player, projectile: Projectile): void {
+    // Skip if player has spawn protection
+    if (Date.now() < player.spawnProtectedUntil) {
+      return;
+    }
+
+    player.hp -= 25; // 4 shots to kill
+    const shooter = this.players.get(projectile.ownerId);
+    
+    this.plogf(player, "HIT", `Hit by projectile, HP: ${player.hp}`);
+
+    if (player.hp <= 0) {
+      if (shooter) {
+        shooter.frags++;
+        this.plogf(shooter, "FRAG", `Killed ${player.name}`);
+      }
+      this.killPlayer(player.id);
+    }
   }
 
   private findSpawnLocation(): { feetX: number; feetY: number } {
@@ -329,6 +435,7 @@ export class Game {
       spawnProtectedUntil: Date.now() + CONSTANTS.spawnProtectionMs,
       canFireAt: 0,
       fallingFromY: null,
+      direction: 'right', // Default direction
     };
 
     // Classify initial state based on spawn position topology
@@ -358,6 +465,9 @@ export class Game {
       const input = this.inputs.get(p.id) || {};
       this.updatePlayer(p, input, dt);
     }
+
+    // Update projectiles
+    this.updateProjectiles(dt);
   }
 
   start(): void {
@@ -375,15 +485,23 @@ export class Game {
       players: Array.from(this.players.values()).map(p => {
         return {
           id: p.id,
-          x: p.feetX,
-          y: p.feetY,
+          feetX: p.feetX,
+          feetY: p.feetY,
           hp: p.hp,
           frags: p.frags,
           state: p.states[0] || 'air', // Send primary state for client compatibility
           spawnProtected: Date.now() < p.spawnProtectedUntil,
+          direction: p.direction,
         };
       }),
-      projectiles: [], // TODO: implement projectiles
+      projectiles: Array.from(this.projectiles.values()).map(p => ({
+        id: p.id,
+        feetX: p.feetX,
+        feetY: p.feetY,
+        vx: p.vx,
+        vy: p.vy,
+        ownerId: p.ownerId,
+      }))
     };
   }
 }

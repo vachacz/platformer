@@ -25,10 +25,10 @@ export function createPlayersLayer(mapHeight: number): { node: Container; render
       let yPix: number;
       
       // Calculate consistent positioning for both states
-      // Server now sends p.y as feet position directly
-      const feetY = p.y;
+      // Server now sends feetX, feetY directly
+      const feetY = p.feetY;
       
-      xPix = Math.round((p.x - 0.5) * 32); // feet to center for sprite positioning
+      xPix = Math.round((p.feetX - 0.5) * 32); // feet to center for sprite positioning
       
       // Always use consistent positioning based on actual feet position
       // This prevents jumps between ground and ladder states
@@ -39,21 +39,37 @@ export function createPlayersLayer(mapHeight: number): { node: Container; render
       // Debug: log render position changes
       const lastPos = lastPositions.get(p.id);
       const posChanged = !lastPos || 
-                        Math.abs(lastPos.x - p.x) > 0.001 || 
-                        Math.abs(lastPos.y - p.y) > 0.001 || 
+                        Math.abs(lastPos.x - p.feetX) > 0.001 || 
+                        Math.abs(lastPos.y - p.feetY) > 0.001 || 
                         lastPos.state !== p.state;
       
       if (posChanged) {
         const feetPixX = xPix + 16;   // feet center
         const feetPixY = yPix + 26;   // feet bottom
         
-        console.log(`[RENDER] Player FEET_PIX=(${feetPixX},${feetPixY}) | SERVER FEET=(${p.x.toFixed(2)},${feetY.toFixed(2)}) | feetPix=${feetPix.toFixed(1)} yPix=${yPix} mapHeight=${mapHeight} state=${p.state} | calc: (${mapHeight}-1-${feetY.toFixed(1)})*32=${((mapHeight-1-feetY)*32).toFixed(1)}`);
+        console.log(`[RENDER] Player FEET_PIX=(${feetPixX},${feetPixY}) | SERVER FEET=(${p.feetX.toFixed(2)},${feetY.toFixed(2)}) | feetPix=${feetPix.toFixed(1)} yPix=${yPix} mapHeight=${mapHeight} state=${p.state} dir=${p.direction}`);
         
-        lastPositions.set(p.id, { x: p.x, y: p.y, state: p.state });
+        lastPositions.set(p.id, { x: p.feetX, y: p.feetY, state: p.state });
       }
       
       // Draw player sprite
       g.rect(xPix, yPix, 32, 26).fill(0x2ecc71);
+      
+      // Draw direction indicator (small arrow or triangle)
+      const arrowColor = 0x27ae60; // Darker green for arrow
+      if (p.direction === 'right') {
+        // Right-facing arrow
+        g.moveTo(xPix + 26, yPix + 8)
+         .lineTo(xPix + 30, yPix + 13)
+         .lineTo(xPix + 26, yPix + 18)
+         .fill(arrowColor);
+      } else {
+        // Left-facing arrow  
+        g.moveTo(xPix + 6, yPix + 8)
+         .lineTo(xPix + 2, yPix + 13)
+         .lineTo(xPix + 6, yPix + 18)
+         .fill(arrowColor);
+      }
       
       // Add visual indicator for ladder state
       if (p.state === 'ladder') {
