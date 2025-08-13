@@ -1,7 +1,7 @@
 export const CONSTANTS = {
   tickHz: 20,
   snapshotMs: 50,
-  speeds: { move: 4, ladder: 2, projectile: 6 },
+  speeds: { move: 4, ladder: 2, projectile: 12 },
   fireRatePerSec: 2,
   spawnProtectionMs: 3000,
 } as const;

@@ -324,9 +324,9 @@ export class Game {
         continue;
       }
 
-      // Check wall collision
+      // Check wall collision - only solid walls stop projectiles
       const tile = this.tileAt(Math.floor(projectile.feetX), Math.floor(projectile.feetY));
-      if (tile === TILE.FLOOR) {
+      if (tile === TILE.FLOOR) { // Only solid walls (#) stop projectiles, X/U/_/H let them pass
         toRemove.push(id);
         continue;
       }
@@ -345,8 +345,8 @@ export class Game {
         }
       }
 
-      // Remove old projectiles (5 second lifetime)
-      if (Date.now() - projectile.createdAt > 5000) {
+      // Remove old projectiles (3 second lifetime for faster bullets)
+      if (Date.now() - projectile.createdAt > 3000) {
         toRemove.push(id);
       }
     }
