@@ -374,7 +374,7 @@ export class Game {
       return;
     }
 
-    player.hp -= 25; // 4 shots to kill
+    player.hp -= 10; // 10 shots to kill
     const shooter = this.players.get(projectile.ownerId);
     
     this.plogf(player, "HIT", `Hit by projectile, HP: ${player.hp}`);

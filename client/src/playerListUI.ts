@@ -35,12 +35,12 @@ export function createPlayerListUI(): { node: Container; update(snap: SnapshotMe
         
         // Health bar white border
         const healthBorder = new Graphics();
-        healthBorder.rect(24, 0, 82, 16).stroke({ color: 0xffffff, width: 1 });
+        healthBorder.rect(24, 0, 80, 15).stroke({ color: 0xffffff, width: 1 });
         container.addChild(healthBorder);
         
         // Health bar gray background
         const healthBg = new Graphics();
-        healthBg.rect(25, 1, 80, 14).fill(0x666666);
+        healthBg.rect(24, 1, 78, 14).fill(0x666666);
         container.addChild(healthBg);
         
         // Health bar foreground
@@ -72,12 +72,7 @@ export function createPlayerListUI(): { node: Container; update(snap: SnapshotMe
       if (healthPercent < 0.5) healthColor = 0xf39c12; // Orange
       if (healthPercent < 0.25) healthColor = 0xe74c3c; // Red
       
-      entry.healthBar.rect(25, 1, 80 * healthPercent, 14).fill(healthColor);
-      
-      // Add spawn protection indicator (golden border around color indicator)
-      if (player.spawnProtected) {
-        entry.colorIndicator.rect(-1, -1, 18, 18).stroke({ color: 0xf1c40f, width: 2 });
-      }
+      entry.healthBar.rect(24, 1, 79 * healthPercent, 14).fill(healthColor);
     });
   }
 
