@@ -1,5 +1,6 @@
 import { Container, Graphics } from 'pixi.js';
 import type { SnapshotMessage } from '@game/shared';
+import { PLAYER_COLORS } from '@game/shared';
 
 export function createPlayersLayer(mapHeight: number): { node: Container; render(snap: SnapshotMessage): void } {
   const node = new Container();
@@ -52,8 +53,9 @@ export function createPlayersLayer(mapHeight: number): { node: Container; render
         lastPositions.set(p.id, { x: p.feetX, y: p.feetY, state: p.state });
       }
       
-      // Draw player sprite
-      g.rect(xPix, yPix, 32, 26).fill(0x2ecc71);
+      // Draw player sprite with unique color
+      const playerColor = PLAYER_COLORS[p.colorIndex] || PLAYER_COLORS[0];
+      g.rect(xPix, yPix, 32, 26).fill(playerColor);
       
       // Draw direction indicator (small arrow or triangle)
       const arrowColor = 0x27ae60; // Darker green for arrow

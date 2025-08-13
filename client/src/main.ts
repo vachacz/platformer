@@ -5,6 +5,7 @@ import { renderMap } from './mapView.js';
 import { createKeyboard } from './input.js';
 import { createPlayersLayer } from './playerView.js';
 import { createProjectilesLayer } from './projectileView.js';
+import { createPlayerListUI } from './playerListUI.js';
 
 const app = new Application();
 const root = document.getElementById('app')!;
@@ -16,6 +17,7 @@ async function start() {
   kb.attach();
   let playersLayer: ReturnType<typeof createPlayersLayer> | null = null;
   let projectilesLayer: ReturnType<typeof createProjectilesLayer> | null = null;
+  let playerListUI: ReturnType<typeof createPlayerListUI> | null = null;
 
   // Minimal connection to server
   const ws = new WebSocket('ws://localhost:8080');
@@ -60,9 +62,18 @@ async function start() {
       // Create projectiles layer
       projectilesLayer = createProjectilesLayer(w.map.height);
       app.stage.addChild(projectilesLayer.node);
+
+      // Create player list UI (positioned absolutely)
+      playerListUI = createPlayerListUI();
+      app.stage.addChild(playerListUI.node);
+      
+      // Position UI at top-right corner
+      playerListUI.node.x = width - 200; // 200px from right edge
+      playerListUI.node.y = 10; // 10px from top
     } else if (msg.type === 'snapshot') {
       playersLayer?.render(msg as any);
       projectilesLayer?.render(msg as any);
+      playerListUI?.update(msg as any);
     }
   });
 

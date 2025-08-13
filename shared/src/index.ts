@@ -6,6 +6,20 @@ export const CONSTANTS = {
   spawnProtectionMs: 3000,
 } as const;
 
+// Player colors - unique colors for each player
+export const PLAYER_COLORS = [
+  0x2ecc71, // Green
+  0xe74c3c, // Red  
+  0x3498db, // Blue
+  0xf39c12, // Orange
+  0x9b59b6, // Purple
+  0x1abc9c, // Teal
+  0xf1c40f, // Yellow
+  0xe67e22, // Dark Orange
+  0x34495e, // Dark Blue
+  0x95a5a6, // Gray
+] as const;
+
 export type ClientInput = {
   seq: number;
   ts: number;
@@ -35,6 +49,7 @@ export type SnapshotMessage = {
     state: 'ground' | 'ladder' | 'air'; 
     spawnProtected: boolean;
     direction: 'left' | 'right';
+    colorIndex: number;
   }>;
   projectiles: Array<{ 
     id: string; 

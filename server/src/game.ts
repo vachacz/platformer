@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid';
-import { CONSTANTS, TILE, type MapData, type SnapshotMessage } from '@game/shared';
+import { CONSTANTS, TILE, PLAYER_COLORS, type MapData, type SnapshotMessage } from '@game/shared';
 
 // Game constants
 const MOVE_SPEED = CONSTANTS.speeds.move;
@@ -31,6 +31,7 @@ export type Player = {
   canFireAt: number;
   fallingFromY: number | null;
   direction: 'left' | 'right';
+  colorIndex: number;
 };
 
 export type Projectile = {
@@ -56,8 +57,25 @@ export class Game {
   private projectiles = new Map<string, Projectile>();
   private inputs = new Map<string, PlayerInput>();
   private lastTickAt = 0;
+  private usedColorIndices = new Set<number>();
 
   constructor(public map: MapData) {}
+
+  private getNextAvailableColorIndex(): number {
+    // Find first available color index
+    for (let i = 0; i < PLAYER_COLORS.length; i++) {
+      if (!this.usedColorIndices.has(i)) {
+        this.usedColorIndices.add(i);
+        return i;
+      }
+    }
+    // If all colors are used, cycle back to start
+    return Math.floor(Math.random() * PLAYER_COLORS.length);
+  }
+
+  private releaseColorIndex(colorIndex: number): void {
+    this.usedColorIndices.delete(colorIndex);
+  }
 
   private tileAt(x: number, y: number): string {
     if (x < 0 || y < 0 || x >= this.map.width || y >= this.map.height) return TILE.EMPTY;
@@ -324,13 +342,6 @@ export class Game {
         continue;
       }
 
-      // Check wall collision - only solid walls stop projectiles
-      const tile = this.tileAt(Math.floor(projectile.feetX), Math.floor(projectile.feetY));
-      if (tile === TILE.FLOOR) { // Only solid walls (#) stop projectiles, X/U/_/H let them pass
-        toRemove.push(id);
-        continue;
-      }
-
       // Check player collisions (exclude owner)
       for (const [playerId, player] of this.players) {
         if (playerId === projectile.ownerId) continue;
@@ -422,6 +433,7 @@ export class Game {
   addPlayer(name: string): Player {
     const id = nanoid();
     const spawn = this.findSpawnLocation();
+    const colorIndex = this.getNextAvailableColorIndex();
     const player: Player = {
       id,
       name,
@@ -436,6 +448,7 @@ export class Game {
       canFireAt: 0,
       fallingFromY: null,
       direction: 'right', // Default direction
+      colorIndex,
     };
 
     // Classify initial state based on spawn position topology
@@ -448,6 +461,10 @@ export class Game {
   }
 
   removePlayer(id: string): void {
+    const player = this.players.get(id);
+    if (player) {
+      this.releaseColorIndex(player.colorIndex);
+    }
     this.players.delete(id);
     this.inputs.delete(id);
   }
@@ -492,6 +509,7 @@ export class Game {
           state: p.states[0] || 'air', // Send primary state for client compatibility
           spawnProtected: Date.now() < p.spawnProtectedUntil,
           direction: p.direction,
+          colorIndex: p.colorIndex,
         };
       }),
       projectiles: Array.from(this.projectiles.values()).map(p => ({

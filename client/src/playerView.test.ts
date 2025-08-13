@@ -56,6 +56,7 @@ describe('Player Rendering Tests', () => {
     state: 'ground' as const,
     spawnProtected: false,
     direction: 'right' as const,
+    colorIndex: 0,
     ...overrides
   });
 
