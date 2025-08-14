@@ -176,10 +176,10 @@ export class Game {
       
       // Jetpack allows free vertical movement
       if (input.moveUp && !input.moveDown) {
-        p.vy = CONSTANTS.speeds.jetpack; // Move up = positive Y
+        p.vy = 6; // Move up = positive Y (explicit value for clarity)
         this.plogf(p, "JETPACK UP", "Flying upward");
       } else if (input.moveDown && !input.moveUp) {
-        p.vy = -CONSTANTS.speeds.jetpack; // Move down = negative Y
+        p.vy = -6; // Move down = negative Y (explicit value for clarity)
         this.plogf(p, "JETPACK DOWN", "Flying downward");
       } else {
         // Jetpack hover - no vertical movement but no gravity
@@ -192,6 +192,10 @@ export class Game {
     if (hasState(p, 'air')) {
       // Pure air state: apply gravity only (gravity pulls down = negative Y)
       p.vy -= GRAVITY * dt;
+      // Only log gravity if it's significant to avoid spam
+      if (Math.abs(p.vy) > 1) {
+        this.plogf(p, "GRAVITY", `Falling with vy=${p.vy.toFixed(2)}`);
+      }
       return;
     }
     
@@ -238,7 +242,15 @@ export class Game {
     private updatePlayer(p: Player, input: PlayerInput, dt: number): void {
 
     // Step 1: Handle jetpack activation/deactivation
+    const wasJetpackActive = p.jetpackActive;
     p.jetpackActive = input.jetpack || false;
+    
+    // Log jetpack state changes
+    if (wasJetpackActive && !p.jetpackActive) {
+      this.plogf(p, "JETPACK OFF", "Jetpack deactivated - returning to normal physics");
+    } else if (!wasJetpackActive && p.jetpackActive) {
+      this.plogf(p, "JETPACK ON", "Jetpack activated - overriding physics");
+    }
 
     // Step 2: Calculate movement vectors
     this.handleHorizontalMovement(p, input);
