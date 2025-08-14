@@ -170,25 +170,15 @@ export class Game {
   // Handle vertical movement input for ladder and ground states
   private handleVerticalMovement(p: Player, input: PlayerInput, dt: number): void {
 
-    // STEP 1: Handle jetpack flight (overrides everything else)
+    // STEP 1: Handle jetpack thrust (adds upward force, doesn't override other physics)
     if (p.jetpackActive) {
-      p.vy = 0; // Reset any previous velocity
-      
-      // Jetpack allows free vertical movement
-      if (input.moveUp && !input.moveDown) {
-        p.vy = 6; // Move up = positive Y (explicit value for clarity)
-        this.plogf(p, "JETPACK UP", "Flying upward");
-      } else if (input.moveDown && !input.moveUp) {
-        p.vy = -6; // Move down = negative Y (explicit value for clarity)
-        this.plogf(p, "JETPACK DOWN", "Flying downward");
-      } else {
-        // Jetpack hover - no vertical movement but no gravity
-        this.plogf(p, "JETPACK HOVER", "Hovering in place");
-      }
-      return;
+      // Jetpack provides upward thrust (positive Y)
+      p.vy += 6; // Add thrust to existing velocity
+      this.plogf(p, "JETPACK THRUST", `Adding upward thrust, total vy=${p.vy.toFixed(2)}`);
+      // Don't return - let other physics (gravity/movement) still apply
     }
 
-    // STEP 2: Handle state-specific vertical behavior (no jetpack)
+    // STEP 2: Handle state-specific vertical behavior (gravity and base movement)
     if (hasState(p, 'air')) {
       // Pure air state: apply gravity only (gravity pulls down = negative Y)
       p.vy -= GRAVITY * dt;
