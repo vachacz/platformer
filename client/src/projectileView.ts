@@ -22,13 +22,10 @@ export function createProjectilesLayer(mapHeight: number): { node: Container; re
       
       // Convert server coordinates (feet-based, Y-up) to client pixels (Y-down)
       const pixelX = Math.round((projectile.feetX - 0.1) * 32); // projectile is 6px wide 
-      const pixelY = Math.round(((mapHeight - projectile.feetY - 1) * 32) - 3); // projectile is 6px tall
+      const pixelY = Math.round(((mapHeight - projectile.feetY - 1) * 32) + 6); // projectile is 6px tall
       
       // Draw projectile as a small yellow circle/rectangle
       g.rect(pixelX, pixelY, 6, 6).fill(0xffff00); // Bright yellow bullet
-      
-      // Add a slight glow effect
-      g.rect(pixelX - 1, pixelY - 1, 8, 8).stroke({ color: 0xffd700, width: 1, alpha: 0.7 });
     }
 
     // Remove projectiles no longer in snapshot

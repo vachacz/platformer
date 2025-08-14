@@ -57,6 +57,7 @@ describe('Player Rendering Tests', () => {
     spawnProtected: false,
     direction: 'right' as const,
     colorIndex: 0,
+    jetpackActive: false,
     ...overrides
   });
 

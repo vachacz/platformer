@@ -57,7 +57,7 @@ export function createPlayersLayer(mapHeight: number): { node: Container; render
       const playerColor = PLAYER_COLORS[p.colorIndex] || PLAYER_COLORS[0];
       g.rect(xPix, yPix, 32, 26).fill(playerColor);
       
-      // Draw direction indicator (small arrow or triangle)
+            // Draw direction indicator (small arrow or triangle)
       const arrowColor = 0x27ae60; // Darker green for arrow
       if (p.direction === 'right') {
         // Right-facing arrow
@@ -66,11 +66,32 @@ export function createPlayersLayer(mapHeight: number): { node: Container; render
          .lineTo(xPix + 26, yPix + 18)
          .fill(arrowColor);
       } else {
-        // Left-facing arrow  
+        // Left-facing arrow
         g.moveTo(xPix + 6, yPix + 8)
          .lineTo(xPix + 2, yPix + 13)
          .lineTo(xPix + 6, yPix + 18)
          .fill(arrowColor);
+      }
+      
+      // Draw jetpack thruster effect when active
+      if (p.jetpackActive) {
+        const thrusterColor = 0xff6b35; // Orange/red flame color
+        const flameIntensity = 0.8 + Math.random() * 0.4; // Flickering effect
+        const flameHeight = 12 + Math.random() * 8; // Variable flame height
+        
+        // Main thruster flame (centered below player)
+        g.circle(xPix + 16, yPix + 26 + flameHeight/2, 6)
+         .fill(thrusterColor);
+        
+        // Inner flame core (brighter)
+        g.circle(xPix + 16, yPix + 26 + flameHeight/3, 3)
+         .fill(0xffff00); // Yellow core
+        
+        // Side thrusters (smaller)
+        g.circle(xPix + 8, yPix + 24 + flameHeight/3, 3)
+         .fill(thrusterColor);
+        g.circle(xPix + 24, yPix + 24 + flameHeight/3, 3)
+         .fill(thrusterColor);
       }
       
       // Add visual indicator for ladder state

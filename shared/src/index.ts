@@ -1,7 +1,7 @@
 export const CONSTANTS = {
   tickHz: 20,
   snapshotMs: 50,
-  speeds: { move: 4, ladder: 2, projectile: 12 },
+  speeds: { move: 4, ladder: 2, projectile: 12, jetpack: 6 },
   fireRatePerSec: 4,
   spawnProtectionMs: 3000,
 } as const;
@@ -28,6 +28,7 @@ export type ClientInput = {
   moveUp?: boolean;
   moveDown?: boolean;
   fire?: boolean;
+  jetpack?: boolean;
 };
 
 export type WelcomeMessage = {
@@ -50,6 +51,7 @@ export type SnapshotMessage = {
     spawnProtected: boolean;
     direction: 'left' | 'right';
     colorIndex: number;
+    jetpackActive: boolean;
   }>;
   projectiles: Array<{ 
     id: string; 

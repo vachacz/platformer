@@ -88,6 +88,7 @@ async function start() {
         moveUp: kb.keys.up,
         moveDown: kb.keys.down,
         fire: kb.keys.fire,
+        jetpack: kb.keys.jetpack,
       };
       
       // DEBUG: Log vertical inputs when they occur

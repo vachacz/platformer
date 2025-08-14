@@ -32,6 +32,7 @@ export type Player = {
   fallingFromY: number | null;
   direction: 'left' | 'right';
   colorIndex: number;
+  jetpackActive: boolean;
 };
 
 export type Projectile = {
@@ -50,6 +51,7 @@ export type PlayerInput = {
   moveUp?: boolean;
   moveDown?: boolean;
   fire?: boolean;
+  jetpack?: boolean;
 };
 
 export class Game {
@@ -168,7 +170,25 @@ export class Game {
   // Handle vertical movement input for ladder and ground states
   private handleVerticalMovement(p: Player, input: PlayerInput, dt: number): void {
 
-    // STEP 1: Handle state-specific vertical behavior
+    // STEP 1: Handle jetpack flight (overrides everything else)
+    if (p.jetpackActive) {
+      p.vy = 0; // Reset any previous velocity
+      
+      // Jetpack allows free vertical movement
+      if (input.moveUp && !input.moveDown) {
+        p.vy = CONSTANTS.speeds.jetpack; // Move up = positive Y
+        this.plogf(p, "JETPACK UP", "Flying upward");
+      } else if (input.moveDown && !input.moveUp) {
+        p.vy = -CONSTANTS.speeds.jetpack; // Move down = negative Y
+        this.plogf(p, "JETPACK DOWN", "Flying downward");
+      } else {
+        // Jetpack hover - no vertical movement but no gravity
+        this.plogf(p, "JETPACK HOVER", "Hovering in place");
+      }
+      return;
+    }
+
+    // STEP 2: Handle state-specific vertical behavior (no jetpack)
     if (hasState(p, 'air')) {
       // Pure air state: apply gravity only (gravity pulls down = negative Y)
       p.vy -= GRAVITY * dt;
@@ -217,7 +237,10 @@ export class Game {
 
     private updatePlayer(p: Player, input: PlayerInput, dt: number): void {
 
-    // Step1 1: Calculate movement vectors
+    // Step 1: Handle jetpack activation/deactivation
+    p.jetpackActive = input.jetpack || false;
+
+    // Step 2: Calculate movement vectors
     this.handleHorizontalMovement(p, input);
     this.handleVerticalMovement(p, input, dt);
 
@@ -449,6 +472,7 @@ export class Game {
       fallingFromY: null,
       direction: 'right', // Default direction
       colorIndex,
+      jetpackActive: false,
     };
 
     // Classify initial state based on spawn position topology
@@ -510,6 +534,7 @@ export class Game {
           spawnProtected: Date.now() < p.spawnProtectedUntil,
           direction: p.direction,
           colorIndex: p.colorIndex,
+          jetpackActive: p.jetpackActive,
         };
       }),
       projectiles: Array.from(this.projectiles.values()).map(p => ({
