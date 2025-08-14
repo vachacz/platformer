@@ -195,8 +195,10 @@ export class Game {
       return;
     }
     
-    // For ladder and ground states: no gravity by default
-    p.vy = 0;
+    // For ladder and ground states: no gravity by default (but preserve jetpack thrust)
+    if (!p.jetpackActive) {
+      p.vy = 0;
+    }
     
     // STEP 3: Handle manual vertical movement (unified logic)
     if (input.moveUp && !input.moveDown) {

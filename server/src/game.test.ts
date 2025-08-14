@@ -838,6 +838,11 @@ describe('Game - Feet-Based Coordinate System', () => {
       expect(game['canMoveLeft'](jetpackPlayer)).toBe(true)
       expect(game['canMoveRight'](jetpackPlayer)).toBe(true)
       
+      // Ground player with jetpack active - should also be allowed horizontal movement
+      const groundJetpackPlayer = createPlayer({ feetX: 1.5, feetY: 1.0, states: ['ground'], jetpackActive: true })
+      expect(game['canMoveLeft'](groundJetpackPlayer)).toBe(true)
+      expect(game['canMoveRight'](groundJetpackPlayer)).toBe(true)
+      
       // Player on 'U' tile with ladder-only state - using actual behavior  
       expect(game['canMoveLeft'](ladderUPlayer)).toBe(true) 
       expect(game['canMoveRight'](ladderUPlayer)).toBe(true)
