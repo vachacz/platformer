@@ -138,12 +138,12 @@ export class Game {
 
   // Determine if player can move left from current position
   private canMoveLeft(p: Player): boolean {
-    return this.isPlayerOnGround(p);
+    return this.isPlayerOnGround(p) || p.jetpackActive;
   }
 
   // Determine if player can move right from current position
   private canMoveRight(p: Player): boolean {
-     return this.isPlayerOnGround(p);
+     return this.isPlayerOnGround(p) || p.jetpackActive;
   }
 
   // Handle horizontal movement input
@@ -173,7 +173,7 @@ export class Game {
     // STEP 1: Handle jetpack thrust (adds upward force, doesn't override other physics)
     if (p.jetpackActive) {
       // Jetpack provides upward thrust but caps at max velocity to prevent endless acceleration
-      const maxJetpackVelocity = 4; // Maximum upward velocity from jetpack
+      const maxJetpackVelocity = 6; // Maximum upward velocity from jetpack
       if (p.vy < maxJetpackVelocity) {
         const thrustToAdd = Math.min(4, maxJetpackVelocity - p.vy);
         p.vy += thrustToAdd;

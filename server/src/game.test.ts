@@ -71,6 +71,9 @@ function createPlayer(options: {
     spawnProtectedUntil: 0,
     canFireAt: 0,
     fallingFromY: null,
+    direction: 'right',
+    colorIndex: 0,
+    jetpackActive: false,
     ...options
   }
   
@@ -829,6 +832,11 @@ describe('Game - Feet-Based Coordinate System', () => {
       // Air player on empty tile - should be blocked
       expect(game['canMoveLeft'](airPlayer)).toBe(false)
       expect(game['canMoveRight'](airPlayer)).toBe(false)
+      
+      // Air player with jetpack active - should be allowed to move horizontally
+      const jetpackPlayer = createPlayer({ feetX: 0.5, feetY: 0.0, states: ['air'], jetpackActive: true })
+      expect(game['canMoveLeft'](jetpackPlayer)).toBe(true)
+      expect(game['canMoveRight'](jetpackPlayer)).toBe(true)
       
       // Player on 'U' tile with ladder-only state - using actual behavior  
       expect(game['canMoveLeft'](ladderUPlayer)).toBe(true) 
