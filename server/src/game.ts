@@ -172,9 +172,15 @@ export class Game {
 
     // STEP 1: Handle jetpack thrust (adds upward force, doesn't override other physics)
     if (p.jetpackActive) {
-      // Jetpack provides upward thrust (positive Y)
-      p.vy += 6; // Add thrust to existing velocity
-      this.plogf(p, "JETPACK THRUST", `Adding upward thrust, total vy=${p.vy.toFixed(2)}`);
+      // Jetpack provides upward thrust but caps at max velocity to prevent endless acceleration
+      const maxJetpackVelocity = 4; // Maximum upward velocity from jetpack
+      if (p.vy < maxJetpackVelocity) {
+        const thrustToAdd = Math.min(4, maxJetpackVelocity - p.vy);
+        p.vy += thrustToAdd;
+        this.plogf(p, "JETPACK THRUST", `Adding ${thrustToAdd.toFixed(2)} thrust, total vy=${p.vy.toFixed(2)}`);
+      } else {
+        this.plogf(p, "JETPACK MAX", `Max velocity reached, vy=${p.vy.toFixed(2)}`);
+      }
       // Don't return - let other physics (gravity/movement) still apply
     }
 
