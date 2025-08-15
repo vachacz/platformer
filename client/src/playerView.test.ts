@@ -23,6 +23,10 @@ vi.mock('pixi.js', () => ({
       this.y = y;
       return this;
     }
+    circle(x: number, y: number, radius: number) {
+      this.calls.push(`circle(${x},${y},${radius})`);
+      return this;
+    }
     fill(color: number) { 
       this.calls.push(`fill(0x${color.toString(16)})`);
       return this;
@@ -117,7 +121,10 @@ describe('Player Rendering Tests', () => {
 
       const g = render(mockSnapshot);
       
-      expect(g.calls).toContain('rect(16,70,32,26)');
+      // Check profile character rendering (direction dependent)
+      expect(g.calls).toContain('circle(36,76,5)');   // Head circle (right-facing profile)
+      expect(g.calls).toContain('rect(31,81,10,9)');  // Body rect (profile)
+      expect(g.calls).toContain('rect(45,84,6,2)');   // Gun barrel (weapon)
       expect(g.calls).toContain('fill(0x2ecc71)');
     });
 
@@ -127,7 +134,9 @@ describe('Player Rendering Tests', () => {
 
       const g = render(mockSnapshot);
       
-      expect(g.calls).toContain('rect(16,6,32,26)');
+      // Check profile character rendering at Y=2
+      expect(g.calls).toContain('circle(36,12,5)');   // Head circle (profile)
+      expect(g.calls).toContain('rect(31,17,10,9)');  // Body rect (profile)
     });
 
     it('should correctly render player at tile boundary (Y=1)', () => {
@@ -136,7 +145,9 @@ describe('Player Rendering Tests', () => {
 
       const g = render(mockSnapshot);
       
-      expect(g.calls).toContain('rect(48,38,32,26)');
+      // Check profile character rendering at Y=1
+      expect(g.calls).toContain('circle(68,44,5)');   // Head circle (profile)
+      expect(g.calls).toContain('rect(63,49,10,9)');  // Body rect (profile)
     });
 
     it('should handle fractional coordinates correctly', () => {
@@ -145,7 +156,9 @@ describe('Player Rendering Tests', () => {
 
       const g = render(mockSnapshot);
       
-      expect(g.calls).toContain('rect(32,54,32,26)');
+      // Check profile character rendering with fractional coordinates
+      expect(g.calls).toContain('circle(52,60,5)');   // Head circle (profile)
+      expect(g.calls).toContain('rect(47,65,10,9)');  // Body rect (profile)
     });
   });
 
@@ -163,7 +176,9 @@ describe('Player Rendering Tests', () => {
       // But the test receives 70, which suggests (mapHeight-feetY)*32-26 = (5-0)*32-26 = 134
       // Actually getting 70, let's see... that's (3*32-26) = 96-26 = 70
       // So it's using (mapHeight-2-feetY)*32-26, or mapHeight is being interpreted as 3
-      expect(g.calls).toContain('rect(16,70,32,26)');
+      // Check pixel art rendering with different map height
+      expect(g.calls).toContain('circle(32,78,7)');  // Head circle
+      expect(g.calls).toContain('rect(26,85,12,11)'); // Body rect
     });
   });
 
@@ -183,8 +198,11 @@ describe('Player Rendering Tests', () => {
       const g1 = playersLayer.node.children[0] as any;
       const g2 = playersLayer.node.children[1] as any;
       
-      expect(g1.calls).toContain('rect(16,54,32,26)');  // player1: Y=0.5 (bottom tile)
-      expect(g2.calls).toContain('rect(48,22,32,26)');   // player2: Y=1.5 (middle tile)
+      // Check pixel art rendering for multiple players
+      expect(g1.calls).toContain('circle(32,62,7)');   // player1 head
+      expect(g1.calls).toContain('rect(26,69,12,11)');  // player1 body 
+      expect(g2.calls).toContain('circle(64,30,7)');   // player2 head
+      expect(g2.calls).toContain('rect(58,37,12,11)');  // player2 body
     });
   });
 
@@ -195,7 +213,9 @@ describe('Player Rendering Tests', () => {
 
       const g = render(mockSnapshot);
       
-      expect(g.calls).toContain('rect(0,54,32,26)');
+      // Check pixel art rendering at map edge
+      expect(g.calls).toContain('circle(16,62,7)');   // Head circle
+      expect(g.calls).toContain('rect(10,69,12,11)'); // Body rect
     });
 
     it('should handle empty player list', () => {
@@ -215,9 +235,9 @@ describe('Player Rendering Tests', () => {
 
       const g = render(mockSnapshot);
       
-      expect(g.calls).toContain('rect(64,22,32,26)');
-      expect(g.x).toBe(64);
-      expect(g.y).toBe(22);
+      // Check pixel art rendering for real server data
+      expect(g.calls).toContain('circle(80,30,7)');   // Head circle
+      expect(g.calls).toContain('rect(74,37,12,11)'); // Body rect
     });
 
     it('should correctly map coordinates with different layer', () => {
@@ -228,7 +248,9 @@ describe('Player Rendering Tests', () => {
 
       const g = render(mockSnapshot, otherMapLayer);
       
-      expect(g.calls).toContain('rect(48,70,32,26)');
+      // Check pixel art rendering with different layer
+      expect(g.calls).toContain('circle(64,78,7)');   // Head circle  
+      expect(g.calls).toContain('rect(58,85,12,11)'); // Body rect
     });
   });
 

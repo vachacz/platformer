@@ -55,43 +55,77 @@ export function createPlayersLayer(mapHeight: number): { node: Container; render
       
       // Draw player sprite with unique color
       const playerColor = PLAYER_COLORS[p.colorIndex] || PLAYER_COLORS[0];
-      g.rect(xPix, yPix, 32, 26).fill(playerColor);
       
-            // Draw direction indicator (small arrow or triangle)
-      const arrowColor = 0x27ae60; // Darker green for arrow
+      // Draw pixel art character in profile view with weapon
       if (p.direction === 'right') {
-        // Right-facing arrow
-        g.moveTo(xPix + 26, yPix + 8)
-         .lineTo(xPix + 30, yPix + 13)
-         .lineTo(xPix + 26, yPix + 18)
-         .fill(arrowColor);
+        // Right-facing profile
+        // Head (circle, smaller)
+        g.circle(xPix + 20, yPix + 6, 5).fill(playerColor);
+        
+        // Eye (single, facing right)
+        g.circle(xPix + 22, yPix + 5, 1).fill(0x000000);
+        
+        // Body (slimmer profile)
+        g.rect(xPix + 15, yPix + 11, 10, 7).fill(playerColor);
+        
+        // Arms
+        g.rect(xPix + 25, yPix + 13, 4, 5).fill(playerColor);  // Front arm (weapon arm)
+
+        // Weapon (rifle/pistol extending from front arm)
+        g.rect(xPix + 29, yPix + 14, 6, 2).fill(0x333333);  // Gun barrel
+        g.rect(xPix + 26, yPix + 15, 3, 3).fill(0x666666);  // Gun grip
+        
+        // Legs (shorter, within 26px bounds)
+        g.rect(xPix + 16, yPix + 18, 3, 5).fill(playerColor);  // Back leg
+        g.rect(xPix + 21, yPix + 18, 3, 5).fill(playerColor);  // Front leg
+        
       } else {
-        // Left-facing arrow
-        g.moveTo(xPix + 6, yPix + 8)
-         .lineTo(xPix + 2, yPix + 13)
-         .lineTo(xPix + 6, yPix + 18)
-         .fill(arrowColor);
+        // Left-facing profile  
+        // Head (circle, smaller)
+        g.circle(xPix + 12, yPix + 6, 5).fill(playerColor);
+        
+        // Eye (single, facing left)
+        g.circle(xPix + 10, yPix + 5, 1).fill(0x000000);
+        
+        // Body (slimmer profile)
+        g.rect(xPix + 7, yPix + 11, 10, 7).fill(playerColor);
+        
+        // Arms
+        g.rect(xPix + 3, yPix + 13, 4, 5).fill(playerColor);   // Front arm (weapon arm)
+
+        // Weapon (rifle/pistol extending from front arm)
+        g.rect(xPix - 3, yPix + 14, 6, 2).fill(0x333333);  // Gun barrel
+        g.rect(xPix + 3, yPix + 15, 3, 3).fill(0x666666);  // Gun grip
+        
+        // Legs (shorter, within 26px bounds)
+        g.rect(xPix + 8, yPix + 18, 3, 5).fill(playerColor);   // Back leg
+        g.rect(xPix + 13, yPix + 18, 3, 5).fill(playerColor);  // Front leg
       }
+      
+      // Direction is now clear from profile view, no need for arrow
       
       // Draw jetpack thruster effect when active
       if (p.jetpackActive) {
         const thrusterColor = 0xff6b35; // Orange/red flame color
-        const flameIntensity = 0.8 + Math.random() * 0.4; // Flickering effect
-        const flameHeight = 12 + Math.random() * 8; // Variable flame height
+        const flameHeight = 6 + Math.random() * 4; // Variable flame height for flickering
         
-        // Main thruster flame (centered below player)
-        g.circle(xPix + 16, yPix + 26 + flameHeight/2, 6)
-         .fill(thrusterColor);
-        
-        // Inner flame core (brighter)
-        g.circle(xPix + 16, yPix + 26 + flameHeight/3, 3)
-         .fill(0xffff00); // Yellow core
-        
-        // Side thrusters (smaller)
-        g.circle(xPix + 8, yPix + 24 + flameHeight/3, 3)
-         .fill(thrusterColor);
-        g.circle(xPix + 24, yPix + 24 + flameHeight/3, 3)
-         .fill(thrusterColor);
+        if (p.direction === 'right') {
+          // Right-facing jetpack flames from feet (adjusted for new leg positions)
+          g.circle(xPix + 17, yPix + 23 + flameHeight/2, 3).fill(thrusterColor);  // Back leg flame
+          g.circle(xPix + 22, yPix + 23 + flameHeight/2, 3).fill(thrusterColor);  // Front leg flame
+          
+          // Inner flame cores (brighter yellow)
+          g.circle(xPix + 17, yPix + 23 + flameHeight/3, 1.5).fill(0xffff00);
+          g.circle(xPix + 22, yPix + 23 + flameHeight/3, 1.5).fill(0xffff00);
+        } else {
+          // Left-facing jetpack flames from feet (adjusted for new leg positions)
+          g.circle(xPix + 9, yPix + 23 + flameHeight/2, 3).fill(thrusterColor);   // Back leg flame
+          g.circle(xPix + 14, yPix + 23 + flameHeight/2, 3).fill(thrusterColor);  // Front leg flame
+          
+          // Inner flame cores (brighter yellow)
+          g.circle(xPix + 9, yPix + 23 + flameHeight/3, 1.5).fill(0xffff00);
+          g.circle(xPix + 14, yPix + 23 + flameHeight/3, 1.5).fill(0xffff00);
+        }
       }
       
       // Add visual indicator for ladder state

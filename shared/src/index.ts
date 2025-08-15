@@ -4,6 +4,17 @@ export const CONSTANTS = {
   speeds: { move: 4, ladder: 2, projectile: 12, jetpack: 6 },
   fireRatePerSec: 4,
   spawnProtectionMs: 3000,
+  
+  // Physics & Game Balance
+  gravity: 25,
+  lethalVelocity: 8,
+  maxJetpackVelocity: 3,
+  jetpackThrust: 4,
+  hitDetectionRadius: 0.4,
+  
+  // Combat & Health
+  projectileDamage: 10,
+  initialHP: 100,
 } as const;
 
 // Player colors - unique colors for each player

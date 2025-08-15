@@ -1,24 +1,11 @@
 import { nanoid } from 'nanoid';
 import { CONSTANTS, TILE, PLAYER_COLORS, type MapData, type SnapshotMessage } from '@game/shared';
 
-// Game constants
-const MOVE_SPEED = CONSTANTS.speeds.move;
-const LADDER_SPEED = CONSTANTS.speeds.ladder;
-const GRAVITY = 25;
-const LETHAL_VELOCITY = 8;
-const MAX_JETPACK_VELOCITY = 3;
 
-// Map boundary constants  
-const MAP_BOUNDARY_OFFSET = 0.5;
 
-// Physics constants
-const JETPACK_THRUST = 4;
-const PROJECTILE_DAMAGE = 10;
-const HIT_DETECTION_RADIUS = 0.4;
-
-// Spawn constants
-const SPAWN_ATTEMPTS = 20;
-const INITIAL_HP = 100;
+// Server-only constants
+const MAP_BOUNDARY_OFFSET = 0.5; // tiles - feet can't reach map edges
+const SPAWN_ATTEMPTS = 20; // maximum attempts to find spawn location
 const TILE_CENTER_OFFSET = 0.5; // offset to center of tile
 
 export type PlayerState = 'ground' | 'ladder' | 'air';
@@ -129,7 +116,7 @@ export class Game {
     // Special case for LADDER_UP (U): can only move down if staying within the same tile
     if (feetTile === TILE.LADDER_UP) {
       const currentTileY = Math.floor(p.feetY);
-      const nextY = p.feetY - LADDER_SPEED / CONSTANTS.tickHz;
+      const nextY = p.feetY - CONSTANTS.speeds.ladder / CONSTANTS.tickHz;
       const nextTileY = Math.floor(nextY);
       
       // Can only move down if staying in the same tile
@@ -158,14 +145,14 @@ export class Game {
     if (input.moveLeft) {
       p.direction = 'left';
       if (this.canMoveLeft(p)) {
-        p.vx = -MOVE_SPEED;
+        p.vx = -CONSTANTS.speeds.move;
       } else {
         this.log(p, "BLOCK LEFT", "Cannot move LEFT");
       }
     } else if (input.moveRight) {
       p.direction = 'right';
       if (this.canMoveRight(p)) {
-        p.vx = MOVE_SPEED;
+        p.vx = CONSTANTS.speeds.move;
       } else {
         this.log(p, "BLOCK RIGHT", "Cannot move RIGHT");
       }
@@ -183,21 +170,20 @@ export class Game {
       if (this.isGroundTile(headTile)) {
         // Blocked by ceiling - cannot thrust upward
         this.log(p, "JETPACK BLOCKED", `Ceiling collision at tile ${headTile}`);
-      } else if (p.vy < MAX_JETPACK_VELOCITY) {
-        const thrustToAdd = Math.min(JETPACK_THRUST, MAX_JETPACK_VELOCITY - p.vy);
+      } else if (p.vy < CONSTANTS.maxJetpackVelocity) {
+        const thrustToAdd = Math.min(CONSTANTS.jetpackThrust, CONSTANTS.maxJetpackVelocity - p.vy);
         p.vy += thrustToAdd;
         this.log(p, "JETPACK THRUST", `Adding ${thrustToAdd.toFixed(2)} thrust, total vy=${p.vy.toFixed(2)}`);
       }
-      // Don't return - let other physics (gravity/movement) still apply
     }
 
     // STEP 2: Handle state-specific vertical behavior (gravity and base movement)
     if (hasState(p, 'air')) {
       // Pure air state: apply gravity only (gravity pulls down = negative Y)
-      p.vy -= GRAVITY * dt;
+      p.vy -= CONSTANTS.gravity * dt;
       // Only log gravity if it's significant to avoid spam
       if (Math.abs(p.vy) > 1) {
-        this.log(p, "GRAVITY", `Falling with vy=${p.vy.toFixed(2)}`);
+        this.log(p, "CONSTANTS.gravity", `Falling with vy=${p.vy.toFixed(2)}`);
       }
       return;
     }
@@ -210,13 +196,13 @@ export class Game {
     // STEP 3: Handle manual vertical movement (unified logic)
     if (input.moveUp && !input.moveDown) {
       if (this.canMoveUp(p)) {
-        p.vy = LADDER_SPEED; // Move up = positive Y
+        p.vy = CONSTANTS.speeds.ladder; // Move up = positive Y
       } else {
         this.log(p, "BLOCKED UP", "Cannot move up");
       }
     } else if (input.moveDown && !input.moveUp) {
       if (this.canMoveDown(p)) {
-        p.vy = -LADDER_SPEED; // Move down = negative Y
+        p.vy = -CONSTANTS.speeds.ladder; // Move down = negative Y
       } else {
         this.log(p, "BLOCKED DOWN", "Cannot move down");
       }
@@ -311,7 +297,7 @@ export class Game {
         // Check for fall damage based on impact velocity, not distance
         const impactVelocity = Math.abs(p.vy); // Downward velocity magnitude
         
-        if (impactVelocity > LETHAL_VELOCITY) {
+        if (impactVelocity > CONSTANTS.lethalVelocity) {
           this.log(p, "LAND", `Player died (impact velocity: ${impactVelocity.toFixed(2)} tiles/sec)`);
           this.killPlayer(p.id);
           return;
@@ -372,7 +358,7 @@ export class Game {
         const dx = Math.abs(player.feetX - projectile.feetX);
         const dy = Math.abs((player.feetY - TILE_CENTER_OFFSET) - projectile.feetY); // Player center vs projectile
         
-        if (dx < HIT_DETECTION_RADIUS && dy < HIT_DETECTION_RADIUS) {
+        if (dx < CONSTANTS.hitDetectionRadius && dy < CONSTANTS.hitDetectionRadius) {
           this.hitPlayer(player, projectile);
           toRemove.push(id);
           break;
@@ -397,7 +383,7 @@ export class Game {
       return;
     }
 
-    player.hp -= PROJECTILE_DAMAGE;
+    player.hp -= CONSTANTS.projectileDamage;
     const shooter = this.players.get(projectile.ownerId);
     
     this.log(player, "HIT", `Hit by projectile, HP: ${player.hp}`);
@@ -433,7 +419,7 @@ export class Game {
     player.feetY = spawn.feetY;
     player.vx = 0;
     player.vy = 0;
-    player.hp = INITIAL_HP;
+    player.hp = CONSTANTS.initialHP;
     player.spawnProtectedUntil = Date.now() + CONSTANTS.spawnProtectionMs;
     player.states = ['ground'];
     
@@ -460,7 +446,7 @@ export class Game {
       feetY: spawn.feetY,
       vx: 0,
       vy: 0,
-      hp: INITIAL_HP,
+      hp: CONSTANTS.initialHP,
       frags: 0,
       states: ['air'], // Will be classified correctly on first update
       spawnProtectedUntil: Date.now() + CONSTANTS.spawnProtectionMs,
