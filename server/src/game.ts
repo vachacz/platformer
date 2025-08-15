@@ -6,6 +6,7 @@ const MOVE_SPEED = CONSTANTS.speeds.move;
 const LADDER_SPEED = CONSTANTS.speeds.ladder;
 const GRAVITY = 25.0; // tiles/s²
 const LETHAL_VELOCITY = 8.0; // tiles/s - fall damage threshold
+const MAX_JETPACK_VELOCITY = 3.0; // tiles/s - maximum upward jetpack speed
 
 export type PlayerState = 'ground' | 'ladder' | 'air';
 
@@ -173,21 +174,17 @@ export class Game {
     // STEP 1: Handle jetpack thrust (adds upward force, doesn't override other physics)
     if (p.jetpackActive) {
       // Check for ceiling collision before adding thrust
-      const headY = p.feetY + 1.0; // Player head is ~1 tile above feet
+      const headY = p.feetY + 1; // Player head is ~1 tile above feet
       const headTile = this.tileAt(p.feetX, headY);
       
       if (this.isGroundTile(headTile)) {
         // Blocked by ceiling - cannot thrust upward
         this.plogf(p, "JETPACK BLOCKED", `Ceiling collision at tile ${headTile}`);
       } else {
-        // Clear to thrust upward
-        const maxJetpackVelocity = 3; // Maximum upward velocity from jetpack
-        if (p.vy < maxJetpackVelocity) {
-          const thrustToAdd = Math.min(4, maxJetpackVelocity - p.vy);
+        if (p.vy < MAX_JETPACK_VELOCITY) {
+          const thrustToAdd = Math.min(4, MAX_JETPACK_VELOCITY - p.vy);
           p.vy += thrustToAdd;
           this.plogf(p, "JETPACK THRUST", `Adding ${thrustToAdd.toFixed(2)} thrust, total vy=${p.vy.toFixed(2)}`);
-        } else {
-          this.plogf(p, "JETPACK MAX", `Max velocity reached, vy=${p.vy.toFixed(2)}`);
         }
       }
       // Don't return - let other physics (gravity/movement) still apply
@@ -249,15 +246,7 @@ export class Game {
     private updatePlayer(p: Player, input: PlayerInput, dt: number): void {
 
     // Step 1: Handle jetpack activation/deactivation
-    const wasJetpackActive = p.jetpackActive;
     p.jetpackActive = input.jetpack || false;
-    
-    // Log jetpack state changes
-    if (wasJetpackActive && !p.jetpackActive) {
-      this.plogf(p, "JETPACK OFF", "Jetpack deactivated - returning to normal physics");
-    } else if (!wasJetpackActive && p.jetpackActive) {
-      this.plogf(p, "JETPACK ON", "Jetpack activated - overriding physics");
-    }
 
     // Step 2: Calculate movement vectors
     this.handleHorizontalMovement(p, input);
