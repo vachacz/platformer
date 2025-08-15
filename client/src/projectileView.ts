@@ -39,3 +39,4 @@ export function createProjectilesLayer(mapHeight: number): { node: Container; re
 
   return { node, render };
 }
+ 

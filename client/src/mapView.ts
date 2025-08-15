@@ -34,11 +34,13 @@ export function renderMap(map: MapData): Container {
         if (variant === 'ladder-up') {
           // Vertical rails (shorter, don't go to floor)
           const railHeight = tileSize - 12; // stop before floor
-          g.rect(x * tileSize + 7, clientY, 4, railHeight).fill(0xa8712a);
-          g.rect(x * tileSize + 21, clientY, 4, railHeight).fill(0xa8712a);
-          // Rungs
-          for (let sy = 5; sy <= railHeight - 6; sy += 6) {
-            g.rect(x * tileSize + 7, clientY + sy, 18, 3).fill(0xd9a066);
+          g.rect(x * tileSize + 7, clientY, 4, railHeight + 2).fill(0xa8712a);
+          g.rect(x * tileSize + 21, clientY, 4, railHeight + 2).fill(0xa8712a);
+          // Rungs (precise, even spacing)
+          const rungSpacing = 4;
+          const rungHeight = 1;
+          for (let sy = 3; sy <= railHeight - 1; sy += rungSpacing) {
+            g.rect(x * tileSize + 7, clientY + sy - 2, 18, rungHeight).fill(0xd9a066);
           }
         }
         
@@ -47,9 +49,11 @@ export function renderMap(map: MapData): Container {
           // Vertical rails (full height, go through floor)
           g.rect(x * tileSize + 7, clientY, 4, tileSize - 6).fill(0xa8712a);
           g.rect(x * tileSize + 21, clientY, 4, tileSize - 6).fill(0xa8712a);
-          // Rungs  
-          for (let sy = 5; sy <= tileSize - 12; sy += 6) {
-            g.rect(x * tileSize + 7, clientY + sy, 18, 3).fill(0xd9a066);
+          // Rungs (precise, even spacing)
+          const rungSpacing = 4;
+          const rungHeight = 1;
+          for (let sy = 1; sy <= tileSize - 8; sy += rungSpacing) {
+            g.rect(x * tileSize + 7, clientY + sy, 18, rungHeight).fill(0xd9a066);
           }
         }
       } 
@@ -60,11 +64,13 @@ export function renderMap(map: MapData): Container {
         const ladderY = clientY - 2; // start slightly above
         
         // Vertical rails
-        g.rect(x * tileSize + 7, ladderY, 4, ladderHeight).fill(0xa8712a);
-        g.rect(x * tileSize + 21, ladderY, 4, ladderHeight).fill(0xa8712a);
-        // Rungs
-        for (let sy = 5; sy <= ladderHeight - 6; sy += 6) {
-          g.rect(x * tileSize + 7, ladderY + sy, 18, 3).fill(0xd9a066);
+        g.rect(x * tileSize + 7, ladderY, 4, ladderHeight - 1).fill(0xa8712a);
+        g.rect(x * tileSize + 21, ladderY, 4, ladderHeight - 1).fill(0xa8712a);
+        // Rungs (precise, even spacing)
+        const rungSpacing = 4;
+        const rungHeight = 1;
+        for (let sy = 3; sy <= ladderHeight - 5; sy += rungSpacing) {
+          g.rect(x * tileSize + 7, ladderY + sy, 18, rungHeight).fill(0xd9a066);
         }
       }
       

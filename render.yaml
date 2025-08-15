@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: game-server
+    env: node
+    plan: free
+    buildCommand: |
+      pnpm install
+      pnpm -r build
+    startCommand: pnpm --filter @game/server start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        fromService:
+          type: web
+          name: game-server
+          property: port

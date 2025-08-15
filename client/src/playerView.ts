@@ -127,11 +127,6 @@ export function createPlayersLayer(mapHeight: number): { node: Container; render
           g.circle(xPix + 14, yPix + 23 + flameHeight/3, 1.5).fill(0xffff00);
         }
       }
-      
-      // Add visual indicator for ladder state
-      if (p.state === 'ladder') {
-        g.rect(xPix + 14, yPix - 2, 4, 2).fill(0xff0000); // small red dot on ladder
-      }
     }
     
     // Remove stale players
