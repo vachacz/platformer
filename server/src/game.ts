@@ -4,9 +4,22 @@ import { CONSTANTS, TILE, PLAYER_COLORS, type MapData, type SnapshotMessage } fr
 // Game constants
 const MOVE_SPEED = CONSTANTS.speeds.move;
 const LADDER_SPEED = CONSTANTS.speeds.ladder;
-const GRAVITY = 25.0; // tiles/s²
-const LETHAL_VELOCITY = 8.0; // tiles/s - fall damage threshold
-const MAX_JETPACK_VELOCITY = 3.0; // tiles/s - maximum upward jetpack speed
+const GRAVITY = 25; // tiles/s²
+const LETHAL_VELOCITY = 8; // tiles/s - fall damage threshold
+const MAX_JETPACK_VELOCITY = 3; // tiles/s - maximum upward jetpack speed
+
+// Map boundary constants  
+const MAP_BOUNDARY_OFFSET = 0.5; // tiles - feet can't reach map edges
+
+// Physics constants
+const JETPACK_THRUST = 4; // tiles/s - thrust added per frame
+const PROJECTILE_DAMAGE = 10; // HP damage per shot
+const HIT_DETECTION_RADIUS = 0.4; // tiles - collision detection radius
+
+// Spawn constants
+const SPAWN_ATTEMPTS = 20; // maximum attempts to find spawn location
+const INITIAL_HP = 100; // starting player health
+const TILE_CENTER_OFFSET = 0.5; // offset to center of tile
 
 export type PlayerState = 'ground' | 'ladder' | 'air';
 
@@ -181,7 +194,7 @@ export class Game {
         // Blocked by ceiling - cannot thrust upward
         this.plogf(p, "JETPACK BLOCKED", `Ceiling collision at tile ${headTile}`);
       } else if (p.vy < MAX_JETPACK_VELOCITY) {
-        const thrustToAdd = Math.min(4, MAX_JETPACK_VELOCITY - p.vy);
+        const thrustToAdd = Math.min(JETPACK_THRUST, MAX_JETPACK_VELOCITY - p.vy);
         p.vy += thrustToAdd;
         this.plogf(p, "JETPACK THRUST", `Adding ${thrustToAdd.toFixed(2)} thrust, total vy=${p.vy.toFixed(2)}`);
       }
@@ -257,9 +270,9 @@ export class Game {
     const newFeetY = p.feetY + p.vy * dt;
 
     // Step 3: Apply map boundaries (feet must stay within map)
-    const minFeetX = 0.5;  // feet can't go to left edge (center would be at 0)
-    const maxFeetX = this.map.width - 0.5;  // feet can't go to right edge
-    const minFeetY = 0.5;  // feet can't go above top (center would be at 0)
+    const minFeetX = MAP_BOUNDARY_OFFSET;  // feet can't go to left edge (center would be at 0)
+    const maxFeetX = this.map.width - MAP_BOUNDARY_OFFSET;  // feet can't go to right edge
+    const minFeetY = MAP_BOUNDARY_OFFSET;  // feet can't go above top (center would be at 0)
     const maxFeetY = this.map.height;  // feet can touch bottom boundary
     
     p.feetX = Math.max(minFeetX, Math.min(maxFeetX, newFeetX));
@@ -372,9 +385,9 @@ export class Game {
         if (playerId === projectile.ownerId) continue;
 
         const dx = Math.abs(player.feetX - projectile.feetX);
-        const dy = Math.abs((player.feetY - 0.5) - projectile.feetY); // Player center vs projectile
+        const dy = Math.abs((player.feetY - TILE_CENTER_OFFSET) - projectile.feetY); // Player center vs projectile
         
-        if (dx < 0.4 && dy < 0.4) { // Hit detection
+        if (dx < HIT_DETECTION_RADIUS && dy < HIT_DETECTION_RADIUS) { // Hit detection
           this.hitPlayer(player, projectile);
           toRemove.push(id);
           break;
@@ -399,7 +412,7 @@ export class Game {
       return;
     }
 
-    player.hp -= 10; // 10 shots to kill
+    player.hp -= PROJECTILE_DAMAGE; // 10 shots to kill
     const shooter = this.players.get(projectile.ownerId);
     
     this.plogf(player, "HIT", `Hit by projectile, HP: ${player.hp}`);
@@ -415,16 +428,16 @@ export class Game {
 
   private findSpawnLocation(): { feetX: number; feetY: number } {
     // Find a random floor tile with empty space above
-    const attempts = 20;
+    const attempts = SPAWN_ATTEMPTS;
     
     for (let i = 0; i < attempts; i++) {
       const x = Math.floor(Math.random() * this.map.width);
       const y = Math.floor(Math.random() * this.map.height);
       
-      const floorTile = this.tileAt(x + 0.5, y);
+      const floorTile = this.tileAt(x + TILE_CENTER_OFFSET, y);
       
       if (this.isGroundTile(floorTile)) {
-        return { feetX: x + 0.5, feetY: y };
+        return { feetX: x + TILE_CENTER_OFFSET, feetY: y };
       }
     }
     
@@ -438,7 +451,7 @@ export class Game {
     player.feetY = spawn.feetY;
     player.vx = 0;
     player.vy = 0;
-    player.hp = 100;
+    player.hp = INITIAL_HP;
     player.spawnProtectedUntil = Date.now() + CONSTANTS.spawnProtectionMs;
     player.states = ['ground'];
     
@@ -465,7 +478,7 @@ export class Game {
       feetY: spawn.feetY,
       vx: 0,
       vy: 0,
-      hp: 100,
+      hp: INITIAL_HP,
       frags: 0,
       states: ['air'], // Will be classified correctly on first update
       spawnProtectedUntil: Date.now() + CONSTANTS.spawnProtectionMs,
