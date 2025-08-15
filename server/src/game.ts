@@ -102,7 +102,7 @@ export class Game {
     return tile;
   }
 
-  private plogf(player: Player, action: string, message: string): void {
+  private log(player: Player, action: string, message: string): void {
     const feetTile = this.tileAt(player.feetX, player.feetY);
     const states = player.states.join(',');
     const feetPos = `${player.feetX.toFixed(2)} x ${player.feetY.toFixed(2)}`;
@@ -160,14 +160,14 @@ export class Game {
       if (this.canMoveLeft(p)) {
         p.vx = -MOVE_SPEED;
       } else {
-        this.plogf(p, "BLOCK LEFT", "Cannot move LEFT");
+        this.log(p, "BLOCK LEFT", "Cannot move LEFT");
       }
     } else if (input.moveRight) {
       p.direction = 'right';
       if (this.canMoveRight(p)) {
         p.vx = MOVE_SPEED;
       } else {
-        this.plogf(p, "BLOCK RIGHT", "Cannot move RIGHT");
+        this.log(p, "BLOCK RIGHT", "Cannot move RIGHT");
       }
     }
   }
@@ -182,11 +182,11 @@ export class Game {
       
       if (this.isGroundTile(headTile)) {
         // Blocked by ceiling - cannot thrust upward
-        this.plogf(p, "JETPACK BLOCKED", `Ceiling collision at tile ${headTile}`);
+        this.log(p, "JETPACK BLOCKED", `Ceiling collision at tile ${headTile}`);
       } else if (p.vy < MAX_JETPACK_VELOCITY) {
         const thrustToAdd = Math.min(JETPACK_THRUST, MAX_JETPACK_VELOCITY - p.vy);
         p.vy += thrustToAdd;
-        this.plogf(p, "JETPACK THRUST", `Adding ${thrustToAdd.toFixed(2)} thrust, total vy=${p.vy.toFixed(2)}`);
+        this.log(p, "JETPACK THRUST", `Adding ${thrustToAdd.toFixed(2)} thrust, total vy=${p.vy.toFixed(2)}`);
       }
       // Don't return - let other physics (gravity/movement) still apply
     }
@@ -197,7 +197,7 @@ export class Game {
       p.vy -= GRAVITY * dt;
       // Only log gravity if it's significant to avoid spam
       if (Math.abs(p.vy) > 1) {
-        this.plogf(p, "GRAVITY", `Falling with vy=${p.vy.toFixed(2)}`);
+        this.log(p, "GRAVITY", `Falling with vy=${p.vy.toFixed(2)}`);
       }
       return;
     }
@@ -212,13 +212,13 @@ export class Game {
       if (this.canMoveUp(p)) {
         p.vy = LADDER_SPEED; // Move up = positive Y
       } else {
-        this.plogf(p, "BLOCKED UP", "Cannot move up");
+        this.log(p, "BLOCKED UP", "Cannot move up");
       }
     } else if (input.moveDown && !input.moveUp) {
       if (this.canMoveDown(p)) {
         p.vy = -LADDER_SPEED; // Move down = negative Y
       } else {
-        this.plogf(p, "BLOCKED DOWN", "Cannot move down");
+        this.log(p, "BLOCKED DOWN", "Cannot move down");
       }
     }
   }
@@ -272,12 +272,12 @@ export class Game {
     // Log player movement only if position actually changed
     if (Math.abs(p.feetX - oldFeetX) > 0.001 || Math.abs(p.feetY - oldFeetY) > 0.001) {
       const prefix = hasState(p, 'air') ? 'GRAVITY' : 'MOVE';
-      this.plogf(p, prefix, `FEET=(${oldFeetX.toFixed(2)},${oldFeetY.toFixed(2)}) -> FEET=(${p.feetX.toFixed(2)},${p.feetY.toFixed(2)}) vx=${p.vx.toFixed(2)} vy=${p.vy.toFixed(2)}`);
+      this.log(p, prefix, `FEET=(${oldFeetX.toFixed(2)},${oldFeetY.toFixed(2)}) -> FEET=(${p.feetX.toFixed(2)},${p.feetY.toFixed(2)}) vx=${p.vx.toFixed(2)} vy=${p.vy.toFixed(2)}`);
     }
   
     // Step 5: Respawn if hitting boundaries
     if (newFeetY <= minFeetY && p.vy < 0) {
-      this.plogf(p, "BOUNDARY", "Player hit bottom boundary - respawning");
+      this.log(p, "BOUNDARY", "Player hit bottom boundary - respawning");
       this.respawnPlayer(p);
       return;
     }
@@ -312,7 +312,7 @@ export class Game {
         const impactVelocity = Math.abs(p.vy); // Downward velocity magnitude
         
         if (impactVelocity > LETHAL_VELOCITY) {
-          this.plogf(p, "LAND", `Player died (impact velocity: ${impactVelocity.toFixed(2)} tiles/sec)`);
+          this.log(p, "LAND", `Player died (impact velocity: ${impactVelocity.toFixed(2)} tiles/sec)`);
           this.killPlayer(p.id);
           return;
         }
@@ -322,7 +322,7 @@ export class Game {
         p.vy = 0;
         setState(p, ['ground']);
 
-        this.plogf(p, "LAND", `Player landed safely at Y=${floorHitY}`);
+        this.log(p, "LAND", `Player landed safely at Y=${floorHitY}`);
       }
     }
 
@@ -348,7 +348,7 @@ export class Game {
     };
 
     this.projectiles.set(id, projectile);
-    this.plogf(player, "FIRE", `Shot projectile ${direction > 0 ? 'right' : 'left'}`);
+    this.log(player, "FIRE", `Shot projectile ${direction > 0 ? 'right' : 'left'}`);
   }
 
   private updateProjectiles(dt: number): void {
@@ -400,21 +400,19 @@ export class Game {
     player.hp -= PROJECTILE_DAMAGE;
     const shooter = this.players.get(projectile.ownerId);
     
-    this.plogf(player, "HIT", `Hit by projectile, HP: ${player.hp}`);
+    this.log(player, "HIT", `Hit by projectile, HP: ${player.hp}`);
 
     if (player.hp <= 0) {
       if (shooter) {
         shooter.frags++;
-        this.plogf(shooter, "FRAG", `Killed ${player.name}`);
+        this.log(shooter, "FRAG", `Killed ${player.name}`);
       }
       this.killPlayer(player.id);
     }
   }
 
   private findSpawnLocation(): { feetX: number; feetY: number } {
-    const attempts = SPAWN_ATTEMPTS;
-    
-    for (let i = 0; i < attempts; i++) {
+    for (let i = 0; i < SPAWN_ATTEMPTS; i++) {
       const x = Math.floor(Math.random() * this.map.width);
       const y = Math.floor(Math.random() * this.map.height);
       
@@ -442,7 +440,7 @@ export class Game {
     // Classify respawn state based on new position topology
     setState(player, this.classifyPlayerState(player));
     
-    this.plogf(player, "RESPAWN", `Player respawned (boundary hit)`);
+    this.log(player, "RESPAWN", `Player respawned (boundary hit)`);
   }
 
   private killPlayer(playerId: string): void {
@@ -475,7 +473,7 @@ export class Game {
     // Classify initial state based on spawn position topology
     setState(player, this.classifyPlayerState(player));
 
-    this.plogf(player, "SPAWN", `Player ${id} spawned`);
+    this.log(player, "SPAWN", `Player ${id} spawned`);
 
     this.players.set(id, player);
     return player;
