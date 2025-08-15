@@ -5,7 +5,8 @@ services:
     plan: free
     buildCommand: |
       pnpm install
-      pnpm -r build
+      pnpm --filter @game/shared build
+      pnpm --filter @game/server build
     startCommand: pnpm --filter @game/server start
     envVars:
       - key: NODE_ENV
