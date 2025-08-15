@@ -5,6 +5,7 @@ import { CONSTANTS, TILE, PLAYER_COLORS, type MapData, type SnapshotMessage } fr
 const MOVE_SPEED = CONSTANTS.speeds.move;
 const LADDER_SPEED = CONSTANTS.speeds.ladder;
 const GRAVITY = 25.0; // tiles/s²
+const LETHAL_VELOCITY = 8.0; // tiles/s - fall damage threshold
 
 export type PlayerState = 'ground' | 'ladder' | 'air';
 
@@ -321,9 +322,8 @@ export class Game {
       if (floorHitY !== null) {
         // Check for fall damage based on impact velocity, not distance
         const impactVelocity = Math.abs(p.vy); // Downward velocity magnitude
-        const lethalVelocity = 8.0; // Death threshold (tiles/sec)
         
-        if (impactVelocity > lethalVelocity) {
+        if (impactVelocity > LETHAL_VELOCITY) {
           this.plogf(p, "LAND", `Player died (impact velocity: ${impactVelocity.toFixed(2)} tiles/sec)`);
           this.killPlayer(p.id);
           return;
