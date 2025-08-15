@@ -172,14 +172,23 @@ export class Game {
 
     // STEP 1: Handle jetpack thrust (adds upward force, doesn't override other physics)
     if (p.jetpackActive) {
-      // Jetpack provides upward thrust but caps at max velocity to prevent endless acceleration
-      const maxJetpackVelocity = 6; // Maximum upward velocity from jetpack
-      if (p.vy < maxJetpackVelocity) {
-        const thrustToAdd = Math.min(4, maxJetpackVelocity - p.vy);
-        p.vy += thrustToAdd;
-        this.plogf(p, "JETPACK THRUST", `Adding ${thrustToAdd.toFixed(2)} thrust, total vy=${p.vy.toFixed(2)}`);
+      // Check for ceiling collision before adding thrust
+      const headY = p.feetY + 1.0; // Player head is ~1 tile above feet
+      const headTile = this.tileAt(p.feetX, headY);
+      
+      if (this.isGroundTile(headTile)) {
+        // Blocked by ceiling - cannot thrust upward
+        this.plogf(p, "JETPACK BLOCKED", `Ceiling collision at tile ${headTile}`);
       } else {
-        this.plogf(p, "JETPACK MAX", `Max velocity reached, vy=${p.vy.toFixed(2)}`);
+        // Clear to thrust upward
+        const maxJetpackVelocity = 3; // Maximum upward velocity from jetpack
+        if (p.vy < maxJetpackVelocity) {
+          const thrustToAdd = Math.min(4, maxJetpackVelocity - p.vy);
+          p.vy += thrustToAdd;
+          this.plogf(p, "JETPACK THRUST", `Adding ${thrustToAdd.toFixed(2)} thrust, total vy=${p.vy.toFixed(2)}`);
+        } else {
+          this.plogf(p, "JETPACK MAX", `Max velocity reached, vy=${p.vy.toFixed(2)}`);
+        }
       }
       // Don't return - let other physics (gravity/movement) still apply
     }
