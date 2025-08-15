@@ -4,21 +4,21 @@ import { CONSTANTS, TILE, PLAYER_COLORS, type MapData, type SnapshotMessage } fr
 // Game constants
 const MOVE_SPEED = CONSTANTS.speeds.move;
 const LADDER_SPEED = CONSTANTS.speeds.ladder;
-const GRAVITY = 25; // tiles/s²
-const LETHAL_VELOCITY = 8; // tiles/s - fall damage threshold
-const MAX_JETPACK_VELOCITY = 3; // tiles/s - maximum upward jetpack speed
+const GRAVITY = 25;
+const LETHAL_VELOCITY = 8;
+const MAX_JETPACK_VELOCITY = 3;
 
 // Map boundary constants  
-const MAP_BOUNDARY_OFFSET = 0.5; // tiles - feet can't reach map edges
+const MAP_BOUNDARY_OFFSET = 0.5;
 
 // Physics constants
-const JETPACK_THRUST = 4; // tiles/s - thrust added per frame
-const PROJECTILE_DAMAGE = 10; // HP damage per shot
-const HIT_DETECTION_RADIUS = 0.4; // tiles - collision detection radius
+const JETPACK_THRUST = 4;
+const PROJECTILE_DAMAGE = 10;
+const HIT_DETECTION_RADIUS = 0.4;
 
 // Spawn constants
-const SPAWN_ATTEMPTS = 20; // maximum attempts to find spawn location
-const INITIAL_HP = 100; // starting player health
+const SPAWN_ATTEMPTS = 20;
+const INITIAL_HP = 100;
 const TILE_CENTER_OFFSET = 0.5; // offset to center of tile
 
 export type PlayerState = 'ground' | 'ladder' | 'air';
@@ -41,7 +41,7 @@ export type Player = {
   vy: number;
   hp: number;
   frags: number;
-  states: PlayerState[]; // Can have multiple states (e.g., ['ground', 'ladder'] on X/U tiles)
+  states: PlayerState[];
   spawnProtectedUntil: number;
   canFireAt: number;
   direction: 'left' | 'right';
@@ -102,7 +102,6 @@ export class Game {
     return tile;
   }
 
-  // Helper method to log player actions with state, tile and feet position
   private plogf(player: Player, action: string, message: string): void {
     const feetTile = this.tileAt(player.feetX, player.feetY);
     const states = player.states.join(',');
@@ -110,24 +109,20 @@ export class Game {
     console.log(`[${states}@${feetTile}] [${feetPos}] [${action}] ${message}`);
   }
 
-  // Determine what type of tile is a ground tile (can stand on)
   private isGroundTile(tile: string): boolean {
     return tile === TILE.FLOOR || tile === TILE.LADDER_TOP || tile === TILE.LADDER_UP || tile === TILE.LADDER_CROSS;
   }
 
-  // Determine if player is physically standing on ground
   private isPlayerOnGround(p: Player): boolean {
     const feetTile = this.tileAt(p.feetX, p.feetY);
     return this.isGroundTile(feetTile) && p.feetY - Math.floor(p.feetY) < 0.1;
     }
 
-  // Determine if player is on a ladder (any ladder tile)
   private isPlayerOnLadder(p: Player): boolean {
     const feetTile = this.tileAt(p.feetX, p.feetY);
     return feetTile === TILE.LADDER_TOP || feetTile === TILE.LADDER || feetTile === TILE.LADDER_CROSS || feetTile === TILE.LADDER_UP;
   }
 
-  // Determine if player can move down
   private canMoveDown(p: Player): boolean {
     const feetTile = this.tileAt(p.feetX, p.feetY);
     
@@ -144,35 +139,31 @@ export class Game {
     return feetTile === TILE.LADDER_TOP || feetTile === TILE.LADDER || feetTile === TILE.LADDER_CROSS;
   }
 
-  // Determine if player can move up
   private canMoveUp(p: Player): boolean {
     const feetTile = this.tileAt(p.feetX, p.feetY);
     return feetTile === TILE.LADDER_UP || feetTile === TILE.LADDER || feetTile === TILE.LADDER_CROSS;
   }
 
-  // Determine if player can move left from current position
   private canMoveLeft(p: Player): boolean {
     return this.isPlayerOnGround(p) || p.jetpackActive;
   }
 
-  // Determine if player can move right from current position
   private canMoveRight(p: Player): boolean {
      return this.isPlayerOnGround(p) || p.jetpackActive;
   }
 
-  // Handle horizontal movement input
   private handleHorizontalMovement(p: Player, input: PlayerInput): void {
     p.vx = 0;
     
     if (input.moveLeft) {
-      p.direction = 'left'; // Update direction
+      p.direction = 'left';
       if (this.canMoveLeft(p)) {
         p.vx = -MOVE_SPEED;
       } else {
         this.plogf(p, "BLOCK LEFT", "Cannot move LEFT");
       }
     } else if (input.moveRight) {
-      p.direction = 'right'; // Update direction
+      p.direction = 'right';
       if (this.canMoveRight(p)) {
         p.vx = MOVE_SPEED;
       } else {
@@ -181,7 +172,6 @@ export class Game {
     }
   }
 
-  // Handle vertical movement input for ladder and ground states
   private handleVerticalMovement(p: Player, input: PlayerInput, dt: number): void {
 
     // STEP 1: Handle jetpack thrust (adds upward force, doesn't override other physics)
@@ -233,11 +223,9 @@ export class Game {
     }
   }
 
-  // Classify player state based on current position
   private classifyPlayerState(p: Player): PlayerState[] {
     const newStates: PlayerState[] = [];
     
-    // Check each possible state
     if (this.isPlayerOnGround(p)) {
       newStates.push('ground');
     }
@@ -338,9 +326,7 @@ export class Game {
       }
     }
 
-    // Step 7: Velocity-based fall damage system eliminates need for tracking falling distance
-
-    // Step 8: Handle shooting
+    // Step 7: Handle shooting
     if (input.fire && Date.now() >= p.canFireAt) {
       this.createProjectile(p);
       p.canFireAt = Date.now() + (1000 / CONSTANTS.fireRatePerSec);
@@ -369,7 +355,6 @@ export class Game {
     const toRemove: string[] = [];
 
     for (const [id, projectile] of this.projectiles) {
-      // Update position
       projectile.feetX += projectile.vx * dt;
       projectile.feetY += projectile.vy * dt;
 
@@ -387,7 +372,7 @@ export class Game {
         const dx = Math.abs(player.feetX - projectile.feetX);
         const dy = Math.abs((player.feetY - TILE_CENTER_OFFSET) - projectile.feetY); // Player center vs projectile
         
-        if (dx < HIT_DETECTION_RADIUS && dy < HIT_DETECTION_RADIUS) { // Hit detection
+        if (dx < HIT_DETECTION_RADIUS && dy < HIT_DETECTION_RADIUS) {
           this.hitPlayer(player, projectile);
           toRemove.push(id);
           break;
@@ -412,7 +397,7 @@ export class Game {
       return;
     }
 
-    player.hp -= PROJECTILE_DAMAGE; // 10 shots to kill
+    player.hp -= PROJECTILE_DAMAGE;
     const shooter = this.players.get(projectile.ownerId);
     
     this.plogf(player, "HIT", `Hit by projectile, HP: ${player.hp}`);
@@ -427,7 +412,6 @@ export class Game {
   }
 
   private findSpawnLocation(): { feetX: number; feetY: number } {
-    // Find a random floor tile with empty space above
     const attempts = SPAWN_ATTEMPTS;
     
     for (let i = 0; i < attempts; i++) {
@@ -520,7 +504,6 @@ export class Game {
       this.updatePlayer(p, input, dt);
     }
 
-    // Update projectiles
     this.updateProjectiles(dt);
   }
 
