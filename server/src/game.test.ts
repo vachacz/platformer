@@ -70,7 +70,6 @@ function createPlayer(options: {
     states: options.states ?? [options.state ?? 'air'],
     spawnProtectedUntil: 0,
     canFireAt: 0,
-    fallingFromY: null,
     direction: 'right',
     colorIndex: 0,
     jetpackActive: false,

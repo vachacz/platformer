@@ -29,7 +29,6 @@ export type Player = {
   states: PlayerState[]; // Can have multiple states (e.g., ['ground', 'ladder'] on X/U tiles)
   spawnProtectedUntil: number;
   canFireAt: number;
-  fallingFromY: number | null;
   direction: 'left' | 'right';
   colorIndex: number;
   jetpackActive: boolean;
@@ -320,9 +319,12 @@ export class Game {
       }
       
       if (floorHitY !== null) {
-        // Check for fall damage
-        if (p.fallingFromY !== null && p.fallingFromY - p.feetY > 1.0) {
-          this.plogf(p, "LAND", `Player died (fell ${(p.fallingFromY - p.feetY).toFixed(2)} tiles)`);
+        // Check for fall damage based on impact velocity, not distance
+        const impactVelocity = Math.abs(p.vy); // Downward velocity magnitude
+        const lethalVelocity = 8.0; // Death threshold (tiles/sec)
+        
+        if (impactVelocity > lethalVelocity) {
+          this.plogf(p, "LAND", `Player died (impact velocity: ${impactVelocity.toFixed(2)} tiles/sec)`);
           this.killPlayer(p.id);
           return;
         }
@@ -332,17 +334,11 @@ export class Game {
         p.vy = 0;
         setState(p, ['ground']);
 
-        this.plogf(p, "LAND", `Player landed at Y=${floorHitY}`);
-        p.fallingFromY = null;
+        this.plogf(p, "LAND", `Player landed safely at Y=${floorHitY}`);
       }
     }
 
-    // Step 7: Track falling for damage calculation
-    if (hasState(p, 'air') && p.fallingFromY === null) {
-      p.fallingFromY = p.feetY;
-    } else if (hasState(p, 'ground') || hasState(p, 'ladder')) {
-      p.fallingFromY = null;
-    }
+    // Step 7: Velocity-based fall damage system eliminates need for tracking falling distance
 
     // Step 8: Handle shooting
     if (input.fire && Date.now() >= p.canFireAt) {
@@ -456,7 +452,6 @@ export class Game {
     player.vx = 0;
     player.vy = 0;
     player.hp = 100;
-    player.fallingFromY = null;
     player.spawnProtectedUntil = Date.now() + CONSTANTS.spawnProtectionMs;
     player.states = ['ground'];
     
@@ -488,7 +483,6 @@ export class Game {
       states: ['air'], // Will be classified correctly on first update
       spawnProtectedUntil: Date.now() + CONSTANTS.spawnProtectionMs,
       canFireAt: 0,
-      fallingFromY: null,
       direction: 'right', // Default direction
       colorIndex,
       jetpackActive: false,
