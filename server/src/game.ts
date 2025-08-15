@@ -180,12 +180,10 @@ export class Game {
       if (this.isGroundTile(headTile)) {
         // Blocked by ceiling - cannot thrust upward
         this.plogf(p, "JETPACK BLOCKED", `Ceiling collision at tile ${headTile}`);
-      } else {
-        if (p.vy < MAX_JETPACK_VELOCITY) {
-          const thrustToAdd = Math.min(4, MAX_JETPACK_VELOCITY - p.vy);
-          p.vy += thrustToAdd;
-          this.plogf(p, "JETPACK THRUST", `Adding ${thrustToAdd.toFixed(2)} thrust, total vy=${p.vy.toFixed(2)}`);
-        }
+      } else if (p.vy < MAX_JETPACK_VELOCITY) {
+        const thrustToAdd = Math.min(4, MAX_JETPACK_VELOCITY - p.vy);
+        p.vy += thrustToAdd;
+        this.plogf(p, "JETPACK THRUST", `Adding ${thrustToAdd.toFixed(2)} thrust, total vy=${p.vy.toFixed(2)}`);
       }
       // Don't return - let other physics (gravity/movement) still apply
     }
